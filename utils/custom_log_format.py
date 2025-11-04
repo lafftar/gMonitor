@@ -84,9 +84,9 @@ def logger(logs_dir: str = 'logs', log_file_name: str = 'app.log', name: str = '
                 # Create a TimedRotatingFileHandler for daily log rotation
                 file_handler = TimedRotatingFileHandler(
                     log_file_path,
-                    when='midnight',
-                    interval=1,
-                    backupCount=7,
+                    when='m',
+                    interval=10,
+                    backupCount=36,
                     encoding='utf-8'
                 )
                 file_handler.setLevel(logging.DEBUG)

@@ -1,14 +1,10 @@
 import asyncio
-import inspect
 import json
 import os
 from logging import Logger
-from random import choice
-from typing import Awaitable
-from urllib.parse import urlencode
 
 from dotenv import load_dotenv
-from rnet import Client, Proxy, Emulation, Jar, Cookie
+from rnet import Client, Proxy, Emulation, Jar
 from rnet.exceptions import RequestError
 from rnet.rnet import Response
 
@@ -27,7 +23,7 @@ def rnet_client(use_proxy: bool = True, allow_redirects: bool = True, set_jar: b
         proxy = [Proxy.all(ROTATING_PROXY)]
         # proxy = [Proxy.all('http://localhost:8081')]  # for debugging with burp suite or something.
         cookie_store = True
-    if os.getenv('PRODUCTION', 'FALSE') == 'TRUE':
+    if os.getenv('PRODUCTION', 'TRUE') == 'TRUE':
         verify = False
     if set_jar:
         jar = Jar()
@@ -84,7 +80,7 @@ async def send_request(
         return_resp: bool = False
 ) -> str | dict | None | tuple[str, int] | tuple[dict, int] | Response:
     if not good_statuses:
-        good_statuses = [200]
+        good_statuses = [200, 204]
     to_return, resp = None, None
     for _ in range(tries):
         try:
