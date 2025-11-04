@@ -152,7 +152,7 @@ async def check():
 async def loop():
     while not GOT_OID:
         asyncio.create_task(check())
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(float(os.getenv("SLEEP", 0.5)))
 
 
 if __name__ == '__main__':
