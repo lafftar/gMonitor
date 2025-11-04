@@ -118,7 +118,10 @@ async def check():
         return_json=True
     )
     if response.get('LANGID'):
-        LOG.debug(f'[{num}] - Got response. {(time() - t1) * 1000:.1f} ms. Data Len - {len(response.get('DATA'))}')
+        if len(response.get('DATA')) != os.getenv("COUNT", "1"):
+            LOG.error(f'[{num}] - Got response. {(time() - t1) * 1000:.1f} ms. Data Len - {len(response.get('DATA'))}')
+        else:
+            LOG.debug(f'[{num}] - Got response. {(time() - t1) * 1000:.1f} ms. Data Len - {len(response.get('DATA'))}')
     else:
         LOG.error(f'[{num}] - Not a good response. {(time() - t1) * 1000:.1f} ms. Data Len - {len(response.get('DATA'))}')
         return False
