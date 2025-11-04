@@ -118,9 +118,9 @@ async def check():
         return_json=True
     )
     if response.get('LANGID'):
-        LOG.debug(f'[{num}] - Got response. {time() - t1:.3f} seconds')
+        LOG.debug(f'[{num}] - Got response. {(time() - t1) * 1000:.1f} ms. Data Len - {len(response.get('DATA'))}')
     else:
-        LOG.error(f'[{num}] - Not a good response. {time() - t1:.3f} seconds')
+        LOG.error(f'[{num}] - Not a good response. {(time() - t1) * 1000:.1f} ms. Data Len - {len(response.get('DATA'))}')
         return False
 
     for data in response['DATA']:
@@ -133,12 +133,13 @@ async def check():
                 '1435147515170132060/iL5dvAYyQYQok0YbdQA2pYIOBKjxtqupJCc8fdScGePpqoxE70qq-swqtB8drtqPoqPJ',
                 {
                     'oid': oid,
-                    'request time': f'{time() - t1:.3f} seconds',
+                    'request time': f'{(time() - t1) * 1000:.1f} ms. Data Len - {len(response.get('DATA'))}',
                 }
             )
             with open(f'resp.json', 'w', encoding='utf-8') as f:
                 f.write(json.dumps(response, ensure_ascii=False, indent=4))
-            LOG.info(f'[{num}] - Saved response. OID - {oid}. {time() - t1:.3f} seconds')
+            LOG.info(f'[{num}] - Saved response. OID - {oid}. {(time() - t1) * 1000:.1f} ms. '
+                     f'Data Len - {len(response.get('DATA'))}')
             GOT_OID = True
             return True
         break
