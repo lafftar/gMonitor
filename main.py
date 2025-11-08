@@ -120,16 +120,16 @@ async def check():
 
 async def loop():
     load_oids()
+    while True:
+        # await check()
+        asyncio.create_task(check())
+        await asyncio.sleep(float(os.getenv("SLEEP", 0.5)))
+
+
+if __name__ == '__main__':
     try:
-        while True:
-            # await check()
-            asyncio.create_task(check())
-            await asyncio.sleep(float(os.getenv("SLEEP", 0.5)))
+        asyncio.run(loop())
     except KeyboardInterrupt:
         LOG.info("Keyboard interrupt detected. Exiting.")
     finally:
         write_oids()
-
-
-if __name__ == '__main__':
-    asyncio.run(loop())
