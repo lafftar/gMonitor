@@ -29,6 +29,12 @@ HEADERS = {
     "accept-language": "en-US,en;q=0.9",
     "priority": "u=1, i",
     'x-forwarded-for': '23.39.75.168',
+    'pragma': 'no-cache',
+    'cache-control': 'no-cache',
+    'x-cache-bypass': 'true',
+    'x-akamai-pragma-nocache': 'true',
+    'x-akamai-cache-bypass': 'true',
+    'x-cdn-cache-control': 'no-cache',
 }
 count = 0
 sem = asyncio.Semaphore(1)
