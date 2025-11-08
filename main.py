@@ -13,7 +13,7 @@ from utils.tools import send_request, rnet_client
 from utils.webhook import send_webhook
 
 LOG = logger(name="gMonitor")
-CLIENT = rnet_client(use_proxy=False)
+CLIENT = rnet_client(use_proxy=True)
 HEADERS = {
     "host": "www.goethe.de",
     "sec-ch-ua-platform": 'Windows"',
