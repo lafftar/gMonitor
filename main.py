@@ -95,7 +95,7 @@ async def check():
         else:
             LOG.debug(f'[{num}] - Got response. {(time() - t1) * 1000:.1f} ms. Data Len - {len(response.get('DATA'))}')
     else:
-        LOG.error(f'[{num}] - Not a good response. {(time() - t1) * 1000:.1f} ms. Data Len - {len(response.get('DATA'))}')
+        LOG.error(f'[{num}] - Not a good response. {(time() - t1) * 1000:.1f} ms. JSON Len - {len(response)}')
         return False
 
     ts = (time() - t1) * 1000
