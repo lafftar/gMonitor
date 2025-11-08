@@ -84,7 +84,7 @@ async def send_request(
     to_return, resp = None, None
     for _ in range(tries):
         try:
-            log.debug(f'Sending Request to {url}')
+            # log.debug(f'Sending Request to {url}')
             if method == 'GET':
                 resp = await client.get(url, headers=headers, timeout=timeout, default_headers=False)
             elif method == 'POST':

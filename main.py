@@ -66,7 +66,7 @@ async def check():
     response = await send_request(
         client=CLIENT,
         log=LOG,
-        url='https://www.goethe.de/rest/examfinderv3/exams/institute'
+        url='https://104.102.50.219/rest/examfinderv3/exams/institute'
             '/O%2010000353%2CO%2010000354%2CO%2010000355%2CO%2010000356%2CO%2010000357%2CO%2010000358'
             '?langId=1'
             '&sortField=startDate'
@@ -124,6 +124,7 @@ async def loop():
         # await check()
         asyncio.create_task(check())
         await asyncio.sleep(float(os.getenv("SLEEP", 0.5)))
+        # return
 
 
 if __name__ == '__main__':
