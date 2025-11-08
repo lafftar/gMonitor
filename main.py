@@ -68,7 +68,7 @@ async def add_num() -> int:
 async def check():
     num = await add_num()
     t1 = time()
-    LOG.debug(f"[{num}] - Sending request")
+    # LOG.debug(f"[{num}] - Sending request")
     response = await send_request(
         client=CLIENT,
         log=LOG,
