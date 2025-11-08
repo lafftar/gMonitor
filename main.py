@@ -84,7 +84,8 @@ async def check():
             f'&count={os.getenv("COUNT", "1")}'
             '&start=1'
             '&formstruct[type]=ER'
-            '&page=1',
+            '&page=1'
+            f'&a{randint(0, 1_000_000)}={randint(0, 1_000_000)}',
         headers=HEADERS,
         return_json=True
     )
