@@ -1,8 +1,8 @@
 import asyncio
-import json
 import os
+from asyncio import sleep
 from datetime import datetime, timezone
-from json import dumps
+from random import randint
 from time import time
 
 from dotenv import load_dotenv
@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from utils.custom_log_format import logger
 from utils.root import get_project_root
 from utils.tools import send_request, rnet_client
+from utils.webhook import send_webhook
 
 LOG = logger(name="gMonitor")
 CLIENT = rnet_client(use_proxy=False)
@@ -31,9 +32,24 @@ HEADERS = {
 }
 count = 0
 sem = asyncio.Semaphore(1)
-ENC_OID = '0A0EC9DBD18FFD8F8A8B01CA789E5D017D83D628B8C6ADEB5AF505A884969AF4DE9EEA998D172E4ADBBCF5DE50821980EAAA889004855598AF2D87439C81CCEA'
-GOT_OID = False
+OIDS = set()
 load_dotenv(f'{get_project_root()}/.env')
+
+
+def load_oids():
+    """Loads once at the start of the program."""
+    with open('oids.txt', 'r', encoding='utf-8') as f:
+        for code in f.readlines():
+            if not code.strip():
+                continue
+            OIDS.add(code.strip())
+
+
+def write_oids():
+    """Writes at end of program"""
+    with open('oids.txt', 'w') as f:
+        for product_code in OIDS:
+            f.write(f'{product_code}\n')
 
 
 async def add_num() -> int:
@@ -43,66 +59,15 @@ async def add_num() -> int:
         return count
 
 
-async def send_webhook(webhook_url: str, fields_dict: dict, title: str = "goethe oid Found", color: int = 3447003):
-    """
-    Sends a rich, timestamped embed to a Discord webhook using httpx.
-
-    Args:
-        webhook_url: The Discord webhook URL.
-        fields_dict: A dictionary of { "Field Name": "Field Value" }.
-        title: The main title of the embed.
-        color: The integer value of the embed's left-side color.
-    """
-
-    # 1. Get the current time in UTC
-    now_utc = datetime.now(timezone.utc)
-
-    # 2. Create the list of "field" objects for the embed
-    embed_fields = []
-
-    # Add the "current time" field as requested
-    embed_fields.append({
-        "name": "Report Time",
-        "value": now_utc.strftime('%Y-%m-%d %H:%M:%S UTC'),
-        "inline": False
-    })
-
-    # Add all the custom fields from the dictionary
-    for name, value in fields_dict.items():
-        embed_fields.append({
-            "name": name,
-            "value": str(value),  # Ensure value is a string
-            "inline": False
-        })
-
-    # 3. Build the final Discord JSON payload
-    payload = {
-        "embeds": [
-            {
-                "title": title,
-                "color": color,
-                "fields": embed_fields,
-
-                # This is the official Discord timestamp.
-                # It must be in ISO 8601 format.
-                "timestamp": now_utc.isoformat()
-            }
-        ]
-    }
-
-    # 4. Send the async request.raise_for_status()
-    response = await send_request(CLIENT, HEADERS, LOG, webhook_url, json_body=payload, method='POST', return_resp=True)
-
-
 async def check():
-    global GOT_OID
     num = await add_num()
     t1 = time()
     LOG.debug(f"[{num}] - Sending request")
     response = await send_request(
         client=CLIENT,
         log=LOG,
-        url='https://www.goethe.de/rest/examfinderv3/exams/institute/O%2010000354'
+        url='https://www.goethe.de/rest/examfinderv3/exams/institute'
+            '/O%2010000353%2CO%2010000354%2CO%2010000355%2CO%2010000356%2CO%2010000357%2CO%2010000358'
             '?langId=1'
             '&sortField=startDate'
             '&langIsoCodes=en'
@@ -126,33 +91,44 @@ async def check():
         LOG.error(f'[{num}] - Not a good response. {(time() - t1) * 1000:.1f} ms. Data Len - {len(response.get('DATA'))}')
         return False
 
+    ts = (time() - t1) * 1000
     for data in response['DATA']:
-        if data.get('encOID') != ENC_OID:
+        oid = data.get('oid', None)
+        if not oid or oid in OIDS:
             continue
+        OIDS.add(oid)
         LOG.debug(f'[{num}] - Got encid. len - {len(data)}')
-        if oid := data.get('oid', None):
-            await send_webhook(
-                'https://discord.com/api/webhooks/'
-                '1435147515170132060/iL5dvAYyQYQok0YbdQA2pYIOBKjxtqupJCc8fdScGePpqoxE70qq-swqtB8drtqPoqPJ',
-                {
-                    'oid': oid,
-                    'request time': f'{(time() - t1) * 1000:.1f} ms. Data Len - {len(response.get('DATA'))}',
-                }
-            )
-            with open(f'resp.json', 'w', encoding='utf-8') as f:
-                f.write(json.dumps(response, ensure_ascii=False, indent=4))
-            LOG.info(f'[{num}] - Saved response. OID - {oid}. {(time() - t1) * 1000:.1f} ms. '
-                     f'Data Len - {len(response.get('DATA'))}')
-            GOT_OID = True
-            return True
-        break
+        asyncio.create_task(send_webhook(
+            webhook_url='https://discord.com/api/webhooks/'
+            '1435147515170132060/iL5dvAYyQYQok0YbdQA2pYIOBKjxtqupJCc8fdScGePpqoxE70qq-swqtB8drtqPoqPJ',
+            fields_dict={
+                'event name': data.get('eventName', 'null'),
+                'location': data.get('locationName', 'null'),
+                'availability': data.get('availability', 'null'),
+                'encOID': data.get('encOID', 'null'),
+                'oid': oid,
+                'request time': f'{ts:.1f} ms. Data Len - {len(response.get('DATA'))}',
+            },
+            title='OID Found'
+        ))
+        # with open(f'resp.json', 'w', encoding='utf-8') as f:
+        #     f.write(json.dumps(response, ensure_ascii=False, indent=4))
+        LOG.info(f'[{num}] - Saved response. OID - {oid}. {ts:.1f} ms. '
+                 f'Data Len - {len(response.get('DATA'))}')
     return False
 
 
 async def loop():
-    while not GOT_OID:
-        asyncio.create_task(check())
-        await asyncio.sleep(float(os.getenv("SLEEP", 0.5)))
+    load_oids()
+    try:
+        while True:
+            # await check()
+            asyncio.create_task(check())
+            await asyncio.sleep(float(os.getenv("SLEEP", 0.5)))
+    except KeyboardInterrupt:
+        LOG.info("Keyboard interrupt detected. Exiting.")
+    finally:
+        write_oids()
 
 
 if __name__ == '__main__':

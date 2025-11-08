@@ -84,6 +84,7 @@ async def send_request(
     to_return, resp = None, None
     for _ in range(tries):
         try:
+            log.debug(f'Sending Request to {url}')
             if method == 'GET':
                 resp = await client.get(url, headers=headers, timeout=timeout, default_headers=False)
             elif method == 'POST':
@@ -92,7 +93,8 @@ async def send_request(
             if resp.status.as_int() not in good_statuses:
                 log.error(
                     f"Try #{_} - HTTP request failed for {url} - Status Code: {resp.status}")
-                return None
+                await asyncio.sleep(delay)
+                continue
             if return_json:
                 text = await resp.text()
                 to_return = json.loads(text)
@@ -101,14 +103,14 @@ async def send_request(
             else:
                 text = await resp.text()
                 to_return = text
+            if return_status:
+                return to_return, resp.status.as_int()
+            return to_return
         except RequestError as e:
             log.error(f"Try #{_} - HTTP request failed for {url}: {e}")
         except Exception as e:
             log.error(f"Try #{_} - HTTP request failed for {url}, Unrecognized error: {e}")
-        if to_return:
-            if return_status:
-                return to_return, resp.status.as_int()
-            return to_return
+
         await asyncio.sleep(delay)
     return None
 
